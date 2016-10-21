@@ -1,0 +1,375 @@
+Go & Concurrency
+种子讲坛
+
+严子怡
+14级种子班
+https://github.com/ladrift/gopl-exercises/
+
+* 什么是Go语言？
+
+.link https://en.wikipedia.org/wiki/Go_(programming_language) Wikipedia
+
+Go (often referred to as golang) is a free and open source programming language created at Google in 2007 by Robert Griesemer, Rob Pike, and Ken Thompson.
+
+.link https://golang.org/ golang.org:
+
+Go is an open source programming language that makes it easy to build simple, reliable, and efficient software.
+
+The Go Gopher
+
+.image https://golang.org/doc/gopher/frontpage.png
+
+* 特点
+
+- Modern (Object-oriented, Concurrency)
+- General Purpose
+- Compact, concise, general-purpose
+- Imperative, statically type-checked, dynamically type-safe
+- Garbage-collected
+- Compiles to native code, statically linked
+- Fast compilation, efficient execution
+
+Designed by programmers for programmers!
+
+* Hello, 世界
+
+.play hello_world.go
+
+Unicode support
+
+* Hello, World! Internet-style
+
+.play hellohttp.go
+
+
+* Syntax
+* Constants
+
+- Maintained precisely:
+	const e = 2.71828182845904523536028747135266249775724709369995957496696763
+	const third = 1.0/3
+- Typed or without type:
+	const M64 int64 = 1<<20
+        const M = 1<<20
+- Evaluated at compile-time:
+	const big = 1<<100 / 1e30  // valid constant expression
+
+Compiler complains if a constant doesn't fit where it is _used_.
+
+
+* Variables
+
+- Statically typed:
+	var x int
+	var s, t string
+- Implicitly or explicitly initialized:
+	var x int
+	var s, t string = "foo", "bar"  // multiple assignment
+
+	var x = 42                      // int
+	var s, b = "foo", true          // string, bool
+- Short variable declaration (inside functions only):
+	x := 42
+	s, b := "foo", true
+- Can safely take address of _any_ variable!
+	return &x
+# compiler will do the right thing
+
+
+* Types
+
+- Predeclared types, the usual suspects:
+	uint8 (byte), uint16, uint32, uint32, uint64,
+	int8, int16, int32, int32 (rune), int64,
+	float32, float64,
+	complex64, complex128,
+	uint, int, uintptr,
+	bool, string,
+	error  // not so usual
+
+- Composite types:
+	array, struct, pointer, function,
+	slice, map, channel
+
+- Abstract type:
+	interface
+
+
+* Type declarations
+
+- Composition from left-to-right:
+	[10]byte  // array of 10 bytes
+
+	struct {
+		name        string
+		left, right *Node
+		action      func(*Node)
+	}
+
+	func(a, b, c int)
+	func(http.ResponseWriter, *http.Request) error
+
+- A type declaration defines a _new_ type:
+	type Weekday int
+
+	type Point struct {
+		x, y int
+	}
+
+
+* Slices
+
+	[]T  // slice of T
+
+- Descriptor for an underlying array segment
+- May grow and shrink
+- Has length and capacity
+- Assigning a slice copies the descriptor, not the underlying array
+
+Common slice operations:
+
+	len(s)
+	s[i]
+	s[i:j]
+	append(s, x)  // append element x to slice s and return new slice
+
+- Slices play the role of dynamically sized arrays
+- Widely used in Go code
+
+
+* Maps
+
+	map[K]V  // map K -> V
+
+- Map is a language-supplied hash table
+- Maps values of key type K to values of type V
+- Assigning a map copies the map reference, not the map contents
+
+Common map operations:
+
+	make(map[K]V)
+	len(m)
+	m[k]
+	delete(m, k)
+
+- Map iteration order is not specified:
+
+	for key, value := range m {
+		// order of key sequence different each time
+	}
+
+* Statements
+
+- Curly braces (C style)
+- Multiple assignments and some other new constructs
+- Many cleanups: mandatory braces, no parentheses for conditionals, implicit break in switches, no semicolons, etc.
+	a, b = b, a                 // swap
+	f, err = os.Open(filename)
+
+	if x < y {
+		return x
+	} else {
+		return y
+	}
+
+	switch day {
+	case Mon:
+		...
+		// break is implicit
+	case Tue, Wed:
+		...
+	}
+
+* Readability
+
+Compactness of syntax does matter when you reading programs.
+
+* An example: IndexOfAny in Java
+
+	public static int IndexOfAny(String str, char[] chars) {
+		if (isEmpty(str) || ArrayUtils.isEmpty(chars)) {
+			return -1;
+		}
+		for (int i = 0; i < str.length(); i++) {
+			char ch = str.charAt(i);
+			for (int j = 0; j < chars.length; j++) {
+				if (chars[j] == ch) {
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+
+299 chars (100%), 101 tokens (100%)
+
+
+* IndexOfAny in Go
+
+.code examples.go /IndexOfAny START/,/IndexOfAny END/
+
+217 chars (73%), 62 tokens (61%)
+
+Almost 30% less text and a surprising 40% fewer tokens to read!
+
+_Less_clutter_means_reduced_cognitive_load._
+
+# minimum improvement
+# typical Go programs tend to require much less than 70% of the code size of equivalent programs in other languages
+
+* Functions
+
+- Regular functions
+	func Sin(x float64) float64
+	func AddScale(x, y int, f float64) int
+
+- Multiple return values
+	func Write(data []byte) (written int, err error)
+
+- Variadic parameter lists without magic
+	func Printf(format string, args ...interface{})
+
+- Functions are first-class values
+	var delta int
+	return func(x int) int { return x + delta }
+
+
+* Function values: An example
+
+.code even_fib.go /fibs START/,/fibs END/
+
+Use fibs():
+
+.play even_fib.go /main START/,/main END/
+
+
+* Concurrency
+
+* Why concurrency?
+
+- Multiple CPU
+- Compose your programs by in-dependent parts.
+- A way to structure your program.
+
+* Goroutine
+
+A "go" statement starts the execution of a function call as an independent concurrent thread of control, or goroutine, within the same address space.
+
+- _go_ before a function call will launch a function as goroutine
+- like fork(), or & in shell
+- A goroutine runs concurrently (M over N schedual)
+- A goroutine has its own stack, but only 2KB (light-weight)
+- Stack space is growing and shrinking as required.
+
+* Simple example
+
+.play goroutine.go
+
+No synchronization here.
+
+* Communication via channels
+
+A channel type specifies a channel value type (and possibly a communication direction):
+
+	chan int
+	chan<- string  // send-only channel
+	<-chan T       // receive-only channel
+
+A channel is a variable of channel type:
+
+	var ch chan int
+	ch := make(chan int)  // declare and initialize with newly made channel
+
+A channel permits _sending_ and _receiving_ values:
+
+	ch <- 1   // send value 1 on channel ch
+	x = <-ch  // receive a value from channel ch (and assign to x)
+
+Channel operations synchronize the communicating goroutines.
+
+* Using channel
+
+channel can be used for synchronization.
+
+.play goroutine2.go
+
+* Using channel(cont.)
+
+But, most importantly for communication
+
+.play channel.go
+
+* Traditional sync primitive
+
+sync.Mutex
+
+.play mutex.go /main START/,/main END/
+
+Not idiomic in Go.
+
+* Select
+
+A control structure unique to concurrency.
+
+The reason channels and goroutines are built into the language.
+
+* Select
+
+The select statement provides another way to handle multiple channels.
+It's like a switch, but each case is a communication:
+
+- All channels are evaluated.
+- Selection blocks until one communication can proceed, which then does.
+- If multiple can proceed, select chooses pseudo-randomly.
+- A default clause, if present, executes immediately if no channel is ready.
+
+* Fan-in
+
+    func fanIn(input1, input2 <-chan string) <-chan string {
+        c := make(chan string)
+        go func() { for { c <- <-input1  }  }()
+        go func() { for { c <- <-input2  }  }()
+        return c
+    }
+
+Using select
+
+.code select.go /fanIn START/,/fanIn END/
+
+* Timeout for slow operation
+
+.play timeout.go
+
+* A large example
+A chat room talking in TCP.
+Every client's inputs are broadcast to all other connected client.
+
+.code chatroom_server/main.go /main START/,/main END/
+
+* Shared channels
+
+.code chatroom_server/main.go /vars START/,/vars END/
+
+* Broadcaster
+
+.code chatroom_server/main.go /broadcaster START/,/broadcaster END/
+
+* handleConn
+
+.code chatroom_server/main.go /handleConn START/,/handleConn END/
+
+* clientWriter
+
+.code chatroom_server/main.go /clientWriter START/,/clientWriter END/
+
+* More resources about concurrency
+.link https://blog.golang.org/concurrency-is-not-parallelism Concurrency is not Parallelism
+.link https://talks.golang.org/2012/concurrency.slide#1 Concurrency Pattern
+.link https://talks.golang.org/2013/advconc.slide#1 Advanced Concurrency Pattern
+
+* 想学习Go语言(你渴望力量吗)？
+
+.link https://golang.org The Go Programming Language
+.link https://talks.golang.org/2015/go-for-java-programmers.slide#1 Go for Java Programmers
+.link https://talks.golang.org/2015/go4cpp.slide Go for C++ Programmers
+.link https://talks.golang.org/2013/go4python.slide#9 Go for Pythonistas
